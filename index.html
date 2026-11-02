@@ -541,21 +541,21 @@ function bindReward(after){
 }
 function applyReward(o){
   S.gems-=o.p; var res;
-  if(o.type==="animal"){ S.farm[o.id]={outfits:{},wear:"",v:"",vs:{}}; res={id:o.id,line:pet(o.id).q,title:"Meet "+pet(o.id).n+"!"}; }
+  if(o.type==="animal"){ S.farm[o.id]={outfits:{},wear:"",v:"",vs:{}}; res={id:o.id,line:pet(o.id).q,title:"Meet "+pet(o.id).n+"!",clip:"pet-"+o.id}; }
   else if(o.type==="outfit"){ var st=petState(o.id), ot=OUTFITS.filter(function(x){return x.id===o.o;})[0]; st.outfits[o.o]=1; st.wear=o.o;
-    res={id:o.id,title:"Looking good!",line:rnd(OUTFIT_JOKES).replace("{n}",pet(o.id).n.split(" ")[0]).replace("{o}",ot.n)}; }
+    res={id:o.id,title:"Looking good!",clip:"outfit",line:rnd(OUTFIT_JOKES).replace("{n}",pet(o.id).n.split(" ")[0]).replace("{o}",ot.n)}; }
   else {
     var cheap=FARM.filter(function(a){return !S.farm[a.id]&&a.p<=25;});
     var vOwned=ownedPets().filter(function(id){var st=petState(id); return !(st.vs.gold&&st.vs.rainbow);});
-    if(cheap.length&&(!vOwned.length||Math.random()<0.45)){ var a=rnd(cheap); S.farm[a.id]={outfits:{},wear:"",v:"",vs:{}}; res={id:a.id,title:"It hatched! Meet "+a.n+"!",line:a.q}; }
+    if(cheap.length&&(!vOwned.length||Math.random()<0.45)){ var a=rnd(cheap); S.farm[a.id]={outfits:{},wear:"",v:"",vs:{}}; res={id:a.id,title:"It hatched! Meet "+a.n+"!",line:a.q,clip:"pet-"+a.id}; }
     else { var id=rnd(vOwned), st2=petState(id), v=!st2.vs.gold&&(st2.vs.rainbow||Math.random()<0.6)?"gold":"rainbow"; st2.vs[v]=1; st2.v=v;
-      res={id:id,title:"Rare! A "+(v==="gold"?"golden":"rainbow")+" "+pet(id).n.split(" ")[0]+"!",line:v==="gold"?"So shiny. Please wear sunglasses.":"Now in every colour. Even the secret ones."}; }
+      res={id:id,clip:v,title:"Rare! A "+(v==="gold"?"golden":"rainbow")+" "+pet(id).n.split(" ")[0]+"!",line:v==="gold"?"So shiny. Please wear sunglasses.":"Now in every colour. Even the secret ones."}; }
   }
   save(); return res;
 }
 function reveal(box,res){
   box.innerHTML="<div class=\"revealed\">"+petHtml(res.id,"big pop")+"<h3>"+esc(res.title)+"</h3><p>"+esc(res.line)+"</p><p class=\"muted\" style=\"font-size:14px\">💎 "+S.gems+" left</p></div>";
-  sndWin();
+  sndWin(); setTimeout(function(){ play(res.clip); },300);
 }
 
 /* ---------- Bonus dig (once a day, after the quest) ---------- */
@@ -571,6 +571,7 @@ function renderDig(){
     "<section class=\"card dig\"><div class=\"mound\" id=\"mound\">🟫</div><div class=\"dword\" id=\"dword\"></div><p class=\"muted\" id=\"dmsg\">Type the word to dig. 30 seconds. Press Space to start.</p></section>"+
     "<div class=\"haul\" id=\"haul\"></div>";
   document.getElementById("back5").onclick=function(){ endDig(true); };
+  play("dig");
   paintDig(); window.scrollTo(0,0);
 }
 function paintDig(){
@@ -604,7 +605,7 @@ function endDig(quit){
     (silly.length?"<p>You also found "+(silly.indexOf("🧦")>=0?"a sock 🧦. Somebody's goat wants it.":silly.indexOf("🐛")>=0?"a worm 🐛. He says hi.":silly.indexOf("🦴")>=0?"a bone 🦴. Woof?":"a carrot 🥕. Snack time!")+"</p>":"")+
     "<div class=\"row\" style=\"justify-content:center\"><button class=\"btn primary big\" id=\"mapb2\">Done</button></div></div>";
   document.getElementById("mapb2").onclick=renderMap; document.getElementById("mapb2").focus();
-  if(gems){ sndWin(); confetti(3); }
+  if(gems){ sndWin(); confetti(3); setTimeout(function(){ play("digdone"); },400); }
 }
 
 /* ---------- First-time intro: how to sit ---------- */
@@ -615,7 +616,68 @@ function renderIntro(next){
    "<p style=\"font-size:20px\">Fingers rest on <b class=\"mono\">A S D F</b> and <b class=\"mono\">J K L ;</b></p>"+
    "<button class=\"btn primary big\" id=\"introgo\">I'm ready!</button></section>";
   document.getElementById("introgo").onclick=function(){ S.introSeen=true; save(); next(); };
+  play("intro");
 }
+
+/* ---------- Recorded voice (static clips in audio/) ---------- */
+var VOICE_V=1, curClip=null;
+var KEYWORD={";":"semicolon",",":"comma",".":"period","?":"question mark","'":"apostrophe"};
+function sayKeyName(c){ return KEYWORD[c]||c.toUpperCase(); }
+function clipFor(l){
+  if(l.kind==="drill") return "lesson-"+l.id;
+  if(l.kind==="story") return "story-"+(l.part+1);
+  return "kind-"+l.kind;
+}
+function spokenFor(l){
+  if(l.kind==="drill"){
+    if(l.idx===0) return "Put your fingers on the home row. Feel the little bumps on the F key and the J key. The F key uses your left pointer finger. The J key uses your right pointer finger.";
+    if(/^[0-9]+$/.test(l.k)) return "New keys: the numbers "+l.k[0]+" to "+l.k[l.k.length-1]+". Reach up from the home row, then come right back.";
+    var ks=l.k.split("");
+    return "New keys: "+ks.map(sayKeyName).join(", and ")+". "+ks.map(function(c){return "The "+sayKeyName(c)+" key uses your "+FNAME[FINGER[c]]+".";}).join(" ");
+  }
+  return null;
+}
+var FIXED_LINES={
+  "kind-words":"Word time! Careful beats fast.",
+  "kind-mix":"Mix it up! Keep your eyes on the screen.",
+  "kind-caps":"Capital letters! Hold Shift with the pinky on the other hand.",
+  "kind-sent":"Whole sentences! Don't forget the period at the end.",
+  "kind-punct":"Question marks and apostrophes. The question mark is Shift and slash.",
+  "kind-facts":"Animal facts! Read and type.",
+  "kind-nums":"Numbers in sentences. Reach up, then come back home.",
+  "kind-tricky":"Tricky keys! Slow and careful.",
+  "kind-custom":"Let's type your words.",
+  "story-1":"This is your story, The Bear. Part one.",
+  "story-2":"The Bear, part two.",
+  "story-3":"The Bear, part three. The big finish!",
+  "intro":"Before we start: sit tall, feet flat, and eyes on the screen. Your fingers rest on A S D F, and J K L semicolon.",
+  "who":"Who's practising today?",
+  "cheer3-0":"Treasure found!","cheer3-1":"Super careful paws!","cheer3-2":"Wow, nearly perfect!",
+  "cheer2-0":"Great digging!","cheer2-1":"Nice work, explorer!","cheer2-2":"So close to three stars!",
+  "cheer1-0":"You unlocked the next stop!","cheer1-1":"Good job. Keep going!",
+  "cheer0":"Almost there! Get ninety percent to unlock the next stop. Go a little slower.",
+  "quest":"Today's quest is complete! Five bonus gems!",
+  "friend":"You met a new animal friend!",
+  "outfit":"Looking good!",
+  "gold":"Rare! A golden one! So shiny.",
+  "rainbow":"Rare! A rainbow one! Every colour, even the secret ones.",
+  "dig":"Bonus dig! Type each word to dig up treasure.",
+  "digdone":"Look at all that treasure!"
+};
+function petLine(a){ return "Meet "+a.n+"! "+a.q; }
+function allPhrases(){
+  var out=[];
+  LESSONS.forEach(function(l){ var t=spokenFor(l); if(t) out.push({key:clipFor(l),text:t}); });
+  Object.keys(FIXED_LINES).forEach(function(k){ out.push({key:k,text:FIXED_LINES[k]}); });
+  FARM.forEach(function(a){ out.push({key:"pet-"+a.id,text:petLine(a)}); });
+  return out;
+}
+function play(key){
+  if(META.voice===false||!key) return;
+  try{ if(curClip){ curClip.pause(); } curClip=new Audio("audio/"+key+".mp3?v="+VOICE_V); curClip.play().catch(function(){}); }catch(e){}
+}
+window.typingPhrases=function(){ return allPhrases(); }; /* used to build the voice clip list */
+function stopVoice(){ try{ if(curClip) curClip.pause(); }catch(e){} }
 
 /* ---------- Who's practising? ---------- */
 function renderPicker(){
@@ -627,6 +689,7 @@ function renderPicker(){
   app.querySelectorAll(".who").forEach(function(b){ b.onclick=function(){ switchStudent(b.dataset.id); renderMap(); }; });
   document.getElementById("addform").onsubmit=function(e){ e.preventDefault(); var id=addStudent(document.getElementById("whoname").value); if(id){ switchStudent(id); renderMap(); } };
   if(!list) document.getElementById("whoname").focus();
+  play("who");
 }
 /* ---------- Map (home): quest + one area at a time ---------- */
 var viewUnit=null;
@@ -701,6 +764,7 @@ function bindStudents(){
 function settingsHtml(){
   return studentsHtml()+"<section class=\"card\" style=\"display:flex;flex-direction:column;gap:14px\"><h2>Settings</h2>"+
      "<div style=\"display:flex;flex-direction:column;gap:6px\"><label for=\"sheeturl\"><b>Google Sheet link</b> (the Apps Script web app URL ending in /exec)</label><div class=\"row\"><input id=\"sheeturl\" type=\"url\" placeholder=\"https://script.google.com/macros/s/.../exec\" value=\""+esc(META.sheetUrl)+"\" style=\"flex:1;min-width:0;font:inherit;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--sunk);color:var(--ink)\"><button class=\"btn\" id=\"sheetsave\">Save link</button></div><p class=\"muted\" id=\"sheetmsg\" style=\"font-size:14px\">"+(META.sheetUrl?"Connected. Each attempt adds a row to the Typing tab.":"Each attempt will add a row to the Typing tab once this is set.")+"</p></div>"+
+     "<div class=\"row\"><label for=\"voicesel\">Voice</label><select id=\"voicesel\"><option value=\"1\""+(META.voice!==false?" selected":"")+">On</option><option value=\"0\""+(META.voice===false?" selected":"")+">Off</option></select></div>"+
      "<div class=\"row\"><label for=\"soundsel\">Soft sounds</label><select id=\"soundsel\"><option value=\"1\""+(META.sound?" selected":"")+">On</option><option value=\"0\""+(META.sound?"":" selected")+">Off</option></select></div>"+
      "<div class=\"row\"><label for=\"goalsel\">Lessons in a daily quest</label><select id=\"goalsel\">"+[2,3,4,5].map(function(n){return "<option"+(n===S.goal?" selected":"")+">"+n+"</option>";}).join("")+"</select></div>"+
      "<div style=\"display:flex;flex-direction:column;gap:6px\"><label for=\"own\"><b>Practice text</b> (paste a book passage or her own writing; it opens as a lesson)</label><textarea id=\"own\" maxlength=\"700\"></textarea><div><button class=\"btn\" id=\"owngo\">Start this as a lesson</button></div></div>"+
@@ -736,6 +800,7 @@ function bindSettings(){
     rd.readAsText(f);
   };
   document.getElementById("goalsel").onchange=function(e){S.goal=+e.target.value; save(); renderReport();};
+  document.getElementById("voicesel").onchange=function(e){META.voice=e.target.value==="1"; saveMeta(); if(META.voice) play("cheer3-0");};
   document.getElementById("soundsel").onchange=function(e){META.sound=e.target.value==="1"; saveMeta();};
   document.getElementById("unlock").onclick=function(){S.unlockAll=!S.unlockAll; save(); renderReport();};
   var rs=document.getElementById("reset"), armed=false;
@@ -869,6 +934,7 @@ function startLesson(l){
    "<p class=\"hint\" id=\"hint\"></p><div id=\"kbwrap\" class=\"kbwrap\">"+kbHtml(learned)+"</div>";
   document.getElementById("back").onclick=renderMap;
   document.getElementById("ov").onclick=function(){ window.focus(); };
+  play(clipFor(l));
   paint();
   window.scrollTo(0,0);
 }
@@ -907,6 +973,7 @@ document.addEventListener("keydown",function(e){
   if(e.key.length!==1) { if(e.key==="Backspace") e.preventDefault(); return; }
   e.preventDefault();
   if(!L.ready){ if(e.key===" "){ L.ready=true; setOverlay(false); paint(); } return; }
+  if(L.i===0&&!L.started) stopVoice();
   var now=performance.now();
   if(!L.started){L.started=true; L.last=now;} else { L.active+=Math.min(now-L.last,3000); L.last=now; }
   var exp=L.text[L.i], b=baseKey(exp);
@@ -958,7 +1025,12 @@ function finish(){
   var newFriend = l.unit!==undefined && !unitBefore && unitDone(l.unit) ? COURSE[l.unit] : null;
   var questDone = stars>0 && todayCount()===S.goal;
 
-  var title = stars===3?rnd(CHEERS3):stars===2?rnd(CHEERS2):stars===1?rnd(CHEERS1):"Almost there!";
+  var ci, title, clip;
+  if(stars===3){ ci=Math.floor(Math.random()*CHEERS3.length); title=CHEERS3[ci]; clip="cheer3-"+ci; }
+  else if(stars===2){ ci=Math.floor(Math.random()*CHEERS2.length); title=CHEERS2[ci]; clip="cheer2-"+ci; }
+  else if(stars===1){ ci=Math.floor(Math.random()*CHEERS1.length); title=CHEERS1[ci]; clip="cheer1-"+ci; }
+  else { title="Almost there!"; clip="cheer0"; }
+  if(questDone) clip="quest"; else if(newFriend) clip="friend";
   var hasNext = l.id && l.idx<LESSONS.length-1;
   var h="<div class=\"card result\">"+starsHtml(stars,"bigstars")+"<h1>"+esc(title)+"</h1>";
   if(stars===0) h+="<p style=\"max-width:44ch\">Get 90% to unlock the next stop. Go a little slower.</p>";
@@ -985,6 +1057,7 @@ function finish(){
   var nb=document.getElementById("nextb"); if(nb){ nb.onclick=function(){startLesson(LESSONS[l.idx+1]);}; nb.focus(); }
   bindReward(function(){ var f=document.getElementById("digb")||nb||document.getElementById("again"); if(f) f.focus(); });
   if(stars>0){ confetti(stars+(newFriend||questDone?3:0)); sndWin(); }
+  setTimeout(function(){ play(clip); }, stars>0?450:0);
 }
 function confetti(n){
   if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;

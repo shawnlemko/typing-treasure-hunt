@@ -300,6 +300,7 @@ var FINDS=[
 
 /* ---------- Saved progress (this browser only) ---------- */
 var KEY="typing-treasure-v1", MKEY="typing-treasure-meta";
+var DEFAULT_SHEET_URL="https://script.google.com/macros/s/AKfycbwDF7EwCJfGsjd7HemGmFHPoyNkaFQwYNc3lTclMBswHmEdvxt6oqXM7yg7gqz7zGu1/exec"; /* the family's "Practice progress" sheet */
 function fresh(){return {best:{},gems:0,days:{},finds:{},kErr:{},kTot:{},goal:3,unlockAll:false,bestWpm:0,storyParts:{},log:[],updated:0,farm:{},introSeen:false,digDay:""};}
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -308,10 +309,10 @@ function withDefaults(o){ var f=fresh(); for(var k in f) if(!(k in o)) o[k]=f[k]
 /* Students: META lists them; each student's progress lives under its own key. */
 var META=(function(){
   var m=null; try{ m=JSON.parse(lsGet(MKEY)||"null"); }catch(e){}
-  if(m&&m.students) return m;
-  m={students:[],current:"",sheetUrl:"",sound:true};
+  if(m&&m.students){ if(!m.sheetUrl&&!m.sheetCleared){ m.sheetUrl=DEFAULT_SHEET_URL; lsSet(MKEY,JSON.stringify(m)); } return m; }
+  m={students:[],current:"",sheetUrl:DEFAULT_SHEET_URL,sound:true};
   var legacy=null; try{ legacy=JSON.parse(lsGet(KEY)||"null"); }catch(e){}
-  if(legacy&&legacy.best){ m.students.push({id:"s1",name:"Student 1"}); m.current="s1"; m.sheetUrl=legacy.sheetUrl||""; if(legacy.sound===false) m.sound=false;
+  if(legacy&&legacy.best){ m.students.push({id:"s1",name:"Student 1"}); m.current="s1"; m.sheetUrl=legacy.sheetUrl||DEFAULT_SHEET_URL; if(legacy.sound===false) m.sound=false;
     delete legacy.sheetUrl; delete legacy.sound; lsSet(KEY+":s1",JSON.stringify(legacy)); }
   lsSet(MKEY,JSON.stringify(m)); return m;
 })();
@@ -716,7 +717,7 @@ function bindSettings(){
   document.getElementById("sheetsave").onclick=function(){
     var v=document.getElementById("sheeturl").value.trim(), m=document.getElementById("sheetmsg");
     if(v && !/^https:\/\/script\.google(usercontent)?\.com\//.test(v)){ m.textContent="That doesn't look like an Apps Script link. It should start with https://script.google.com/"; return; }
-    META.sheetUrl=v; saveMeta(); m.textContent = v ? "Saved. Sending any earlier attempts now." : "Link removed.";
+    META.sheetUrl=v; META.sheetCleared=!v; saveMeta(); m.textContent = v ? "Saved. Sending any earlier attempts now." : "Link removed.";
     if(v) syncPending(true);
   };
   document.getElementById("backup").onclick=function(){

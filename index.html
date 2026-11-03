@@ -691,11 +691,11 @@ function play(key){
 window.typingPhrases=function(){ return allPhrases(); }; /* used to build the voice clip list */
 function stopVoice(){ try{ if(curClip) curClip.pause(); }catch(e){} }
 
-/* ---------- Who's practising? ---------- */
+/* ---------- Who's typing? ---------- */
 function renderPicker(){
   stopLesson(); currentView="picker";
   var list=META.students.map(function(st){ return "<button class=\"btn big who\" data-id=\""+st.id+"\">"+esc(st.name)+"</button>"; }).join("");
-  app.innerHTML="<section class=\"card result\"><h1>Who's practising?</h1>"+
+  app.innerHTML="<section class=\"card result\"><h1>Who's typing?</h1>"+
     (list?"<div class=\"row\" style=\"justify-content:center\">"+list+"</div>":"")+
     "<form class=\"row\" id=\"addform\" style=\"justify-content:center\"><label for=\"whoname\" class=\"muted\">"+(list?"Someone new?":"Type your name")+"</label><input id=\"whoname\" maxlength=\"24\" autocomplete=\"off\" style=\"font:inherit;font-size:20px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--sunk);color:var(--ink);min-width:0;width:220px\"><button class=\"btn primary\" type=\"submit\">"+(list?"Add":"Start")+"</button></form></section>";
   app.querySelectorAll(".who").forEach(function(b){ b.onclick=function(){ switchStudent(b.dataset.id); renderMap(); }; });
@@ -1078,7 +1078,7 @@ function confetti(n){
   document.body.appendChild(box); setTimeout(function(){box.remove();},2800);
 }
 
-if(META.students.length>1||!student()) renderPicker(); else renderMap();
+renderPicker(); /* always start on "Who's typing?" (Shawn, 2026-11-03) */
 connectCloud();
 })();
 </script>

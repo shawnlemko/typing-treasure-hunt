@@ -574,7 +574,8 @@ var G=null;
 function digReady(){ return todayCount()>=S.goal && S.digDay!==today(); }
 function renderDig(){
   stopLesson(); currentView="dig";
-  var words=wordsFor(learnedNow().replace(/[^a-z]/g,""),"",40)||["fall","sad","ask","dad","lad","all"];
+  var keys=learnedNow().replace(/[^a-z]/g,"")||"fj"; /* only keys she has learned (Shawn, 2026-11-03) */
+  var words=wordsFor(keys,"",40)||groups(keys.split(""),[],40,2,4,0);
   var loot=["💎","💎","💎","🪙","🪙","👑","💍","🧦","🦴","🥕","🐛"];
   G={words:words,w:0,i:0,found:[],end:0,timer:null,loot:loot,started:false};
   app.innerHTML="<header class=\"top\"><h1>Bonus dig</h1>"+backBtn("back5")+"</header>"+

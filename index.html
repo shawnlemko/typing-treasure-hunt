@@ -524,9 +524,9 @@ var OUTFIT_JOKES=["{n} says the {o} makes them 10% fancier.","{n} will not take 
 var EGG_PRICE=8;
 function pet(id){ var a=FARM.filter(function(x){return x.id===id;})[0]; return a; }
 function petState(id){ var s=S.farm[id]; if(s&&!s.outfits){ s.outfits={}; s.wear=""; s.v=""; s.vs={}; } return s; }
-function petHtml(id,cls){
-  var a=pet(id), st=petState(id)||{}, o=OUTFITS.filter(function(x){return x.id===st.wear;})[0];
-  return "<span class=\"pet"+(st.v?" v-"+st.v:"")+(cls?" "+cls:"")+"\" title=\""+esc(a.n)+"\"><span class=\"pe\">"+a.e+"</span>"+(o?"<span class=\"wear w-"+o.id+"\">"+o.e+"</span>":"")+"</span>";
+function petHtml(id,cls,look){ /* look: "", "gold" or "rainbow"; left out = newest look */
+  var a=pet(id), st=petState(id)||{}, o=OUTFITS.filter(function(x){return x.id===st.wear;})[0], v=look===undefined?st.v:look;
+  return "<span class=\"pet"+(v?" v-"+v:"")+(cls?" "+cls:"")+"\" title=\""+esc(a.n)+"\"><span class=\"pe\">"+a.e+"</span>"+(o?"<span class=\"wear w-"+o.id+"\">"+o.e+"</span>":"")+"</span>";
 }
 function ownedPets(){ return FARM.filter(function(a){return S.farm[a.id];}).map(function(a){return a.id;}); }
 function rewardOffers(){
@@ -573,7 +573,7 @@ function applyReward(o){
     var vOwned=ownedPets().filter(function(id){var st=petState(id); return !(st.vs.gold&&st.vs.rainbow);});
     if(cheap.length&&(!vOwned.length||Math.random()<0.45)){ var a=rnd(cheap); S.farm[a.id]={outfits:{},wear:"",v:"",vs:{}}; res={id:a.id,title:"It hatched! Meet "+a.n+"!",line:a.q,clip:"pet-"+a.id}; }
     else { var id=rnd(vOwned), st2=petState(id), v=!st2.vs.gold&&(st2.vs.rainbow||Math.random()<0.6)?"gold":"rainbow"; st2.vs[v]=1; st2.v=v;
-      res={id:id,clip:v,title:"Rare! A "+(v==="gold"?"golden":"rainbow")+" "+pet(id).n.split(" ")[0]+"!",line:v==="gold"?"So shiny. Please wear sunglasses.":"Now in every colour. Even the secret ones."}; }
+      res={id:id,clip:v,title:"Rare! A "+(v==="gold"?"golden":"rainbow")+" "+pet(id).n.split(" ")[0]+"!",line:v==="gold"?"So shiny. Please wear sunglasses.":"Every colour. Even the secret ones."}; }
   }
   save(); return res;
 }
@@ -768,7 +768,8 @@ function renderTreasures(){
   var finds=FINDS.filter(function(f){ if(S.finds[f.id]) return true; todo++; return todo<=3; }).map(function(f){var got=!!S.finds[f.id]; return "<li class=\""+(got?"found":"")+"\"><span class=\"tick\" aria-hidden=\"true\">"+(got?"✓":"")+"</span><span><b>"+esc(f.t)+"</b>: "+esc(f.d)+"</span></li>";}).join("");
   app.innerHTML="<header class=\"top\"><h1>My treasures</h1>"+backBtn("back3")+"</header>"+
     "<section class=\"card friends\"><h2>Animal friends</h2><div class=\"friend-row\">"+friends+"</div></section>"+
-    (ownedPets().length?"<section class=\"card friends\"><h2>My animals <span class=\"muted\" style=\"font-size:16px\">"+ownedPets().length+" of "+FARM.length+"</span></h2><div class=\"petrow\">"+ownedPets().map(function(id){return "<div class=\"petcard\">"+petHtml(id)+"<span>"+esc(pet(id).n)+"</span></div>";}).join("")+"</div></section>":"")+
+    (ownedPets().length?"<section class=\"card friends\"><h2>My animals <span class=\"muted\" style=\"font-size:16px\">"+ownedPets().length+" of "+FARM.length+"</span></h2><div class=\"petrow\">"+ownedPets().map(function(id){ var vs=petState(id).vs||{}; /* rare looks are extra animals; she keeps the plain one too (Shawn, 2026-11-03) */
+      return ["","gold","rainbow"].filter(function(v){return !v||vs[v];}).map(function(v){ return "<div class=\"petcard\">"+petHtml(id,"",v)+"<span>"+(v==="gold"?"Golden ":v==="rainbow"?"Rainbow ":"")+esc(v?pet(id).n.split(" ")[0]:pet(id).n)+"</span></div>"; }).join(""); }).join("")+"</div></section>":"")+
     "<section class=\"card\" style=\"display:flex;flex-direction:column;gap:12px\"><h2>Scavenger hunt <span class=\"muted\" style=\"font-size:16px\">"+FINDS.filter(function(f){return S.finds[f.id];}).length+" of "+FINDS.length+"</span></h2><ul class=\"finds\">"+finds+"</ul></section>";
   window.scrollTo(0,0);
   document.getElementById("back3").onclick=renderMap;

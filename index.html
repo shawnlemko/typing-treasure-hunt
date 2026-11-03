@@ -295,7 +295,20 @@ var FINDS=[
  {id:"speed25",t:"Lightning paws",d:"Type 25 words a minute (90%+ right)"},
  {id:"tricky",t:"Key tamer",d:"Finish a tricky keys practice"},
  {id:"story",t:"Storyteller",d:"Type all three parts of The Bear"},
- {id:"craft",t:"Your own words",d:"Type something you wrote or chose"}
+ {id:"craft",t:"Your own words",d:"Type something you wrote or chose"},
+ /* added 2026-11-03 (Shawn: double the list) */
+ {id:"lessons10",t:"Ten tracks",d:"Finish 10 lessons"},
+ {id:"area1",t:"New friend",d:"Finish a whole area"},
+ {id:"farm1",t:"Farm friend",d:"Adopt your first animal"},
+ {id:"sock",t:"Lost sock",d:"Dig up a sock. Ew!"},
+ {id:"speed20",t:"Zippy paws",d:"Type 20 words a minute (90%+ right)"},
+ {id:"three10",t:"Star collector",d:"Get 3 stars on 10 stops"},
+ {id:"farm5",t:"Barnyard bunch",d:"Have 5 animals"},
+ {id:"streak14",t:"Two-week trek",d:"Practice 14 days in a row"},
+ {id:"shiny",t:"Shiny surprise",d:"Hatch a golden or rainbow animal"},
+ {id:"lessons50",t:"Fifty footprints",d:"Finish 50 lessons"},
+ {id:"days30",t:"Map maker",d:"Practice on 30 different days"},
+ {id:"allareas",t:"Whole map explored",d:"Finish every area"}
 ];
 
 /* ---------- Saved progress (this browser only) ---------- */
@@ -609,12 +622,14 @@ function digKey(e){
 function endDig(quit){
   if(!G) return; clearInterval(G.timer);
   var n=G.found.length, gems=Math.min(8,n), silly=G.found.filter(function(x){return "🧦🦴🥕🐛".indexOf(x)>=0;});
-  var startedRun=G.started; G=null;
+  var startedRun=G.started, G_sock=G.found.indexOf("🧦")>=0; G=null;
   if(!startedRun){ renderMap(); return; }
+  var sockNew=G_sock&&!S.finds.sock; if(sockNew) S.finds.sock=Date.now();
   S.digDay=today(); S.gems+=gems; save(); currentView="digdone";
   app.innerHTML="<div class=\"card result\"><div style=\"font-size:56px\">⛏️</div><h1>"+(n?"You dug up "+n+" "+(n===1?"treasure":"treasures")+"!":"Nothing this time!")+"</h1>"+
     (gems?"<div class=\"stat\"><b>+"+gems+" 💎</b><span>gems</span></div>":"")+
     (silly.length?"<p>You also found "+(silly.indexOf("🧦")>=0?"a sock 🧦. Somebody's goat wants it.":silly.indexOf("🐛")>=0?"a worm 🐛. He says hi.":silly.indexOf("🦴")>=0?"a bone 🦴. Woof?":"a carrot 🥕. Snack time!")+"</p>":"")+
+    (sockNew?"<div class=\"newfind\">Treasure found: Lost sock</div>":"")+
     "<div class=\"row\" style=\"justify-content:center\"><button class=\"btn primary big\" id=\"mapb2\">Done</button></div></div>";
   document.getElementById("mapb2").onclick=renderMap; document.getElementById("mapb2").focus();
   if(gems){ sndWin(); confetti(3); setTimeout(function(){ play("digdone"); },400); }
@@ -749,11 +764,12 @@ function unitOpen(ui){ return unlocked(COURSE[ui].lessons[0].idx); }
 function renderTreasures(){
   stopLesson(); currentView="treasures";
   var friends=COURSE.map(function(u,ui){ return unitDone(ui) ? "<div class=\"friend\" title=\""+esc(u.friend)+"\">"+u.animal+"</div>" : "<div class=\"friend locked\">?</div>"; }).join("");
-  var finds=FINDS.map(function(f){var got=!!S.finds[f.id]; return "<li class=\""+(got?"found":"")+"\"><span class=\"tick\" aria-hidden=\"true\">"+(got?"✓":"")+"</span><span><b>"+esc(f.t)+"</b>: "+esc(f.d)+"</span></li>";}).join("");
+  var todo=0; /* show what she has found plus the next 3 to look for (keeps the list short) */
+  var finds=FINDS.filter(function(f){ if(S.finds[f.id]) return true; todo++; return todo<=3; }).map(function(f){var got=!!S.finds[f.id]; return "<li class=\""+(got?"found":"")+"\"><span class=\"tick\" aria-hidden=\"true\">"+(got?"✓":"")+"</span><span><b>"+esc(f.t)+"</b>: "+esc(f.d)+"</span></li>";}).join("");
   app.innerHTML="<header class=\"top\"><h1>My treasures</h1>"+backBtn("back3")+"</header>"+
     "<section class=\"card friends\"><h2>Animal friends</h2><div class=\"friend-row\">"+friends+"</div></section>"+
     (ownedPets().length?"<section class=\"card friends\"><h2>My animals <span class=\"muted\" style=\"font-size:16px\">"+ownedPets().length+" of "+FARM.length+"</span></h2><div class=\"petrow\">"+ownedPets().map(function(id){return "<div class=\"petcard\">"+petHtml(id)+"<span>"+esc(pet(id).n)+"</span></div>";}).join("")+"</div></section>":"")+
-    "<section class=\"card\" style=\"display:flex;flex-direction:column;gap:12px\"><h2>Scavenger hunt</h2><ul class=\"finds\">"+finds+"</ul></section>";
+    "<section class=\"card\" style=\"display:flex;flex-direction:column;gap:12px\"><h2>Scavenger hunt <span class=\"muted\" style=\"font-size:16px\">"+FINDS.filter(function(f){return S.finds[f.id];}).length+" of "+FINDS.length+"</span></h2><ul class=\"finds\">"+finds+"</ul></section>";
   window.scrollTo(0,0);
   document.getElementById("back3").onclick=renderMap;
 }
@@ -1028,6 +1044,16 @@ function finish(){
     if(l.kind==="tricky") find("tricky");
     if(l.kind==="custom") find("craft");
     if(l.kind==="story"){ S.storyParts[l.part]=1; if(S.storyParts[0]&&S.storyParts[1]&&S.storyParts[2]) find("story"); }
+    var wins=S.log.filter(function(r){return r.stars>0;}).length+1;
+    if(wins>=10) find("lessons10"); if(wins>=50) find("lessons50");
+    if(sp>=20) find("speed20");
+    if(Object.keys(S.best).filter(function(k){return S.best[k].stars===3;}).length>=10) find("three10");
+    if(st>=14) find("streak14");
+    if(Object.keys(S.days).length>=30) find("days30");
+    if(COURSE.some(function(u,ui){return unitDone(ui);})) find("area1");
+    if(COURSE.every(function(u,ui){return unitDone(ui);})) find("allareas");
+    var pets=ownedPets(); if(pets.length>=1) find("farm1"); if(pets.length>=5) find("farm5");
+    if(pets.some(function(id){var v=S.farm[id].vs||{}; return v.gold||v.rainbow;})) find("shiny");
   }
   S.log.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),at:new Date().toISOString(),stop:l.id?l.idx+1:"",lesson:l.t,acc:acc,wpm:sp,stars:stars,chars:tot,mistakes:miss,
     missed:Object.keys(L.firstMiss).map(function(i){return baseKey(L.text[i]);}).filter(function(v,i,a){return a.indexOf(v)===i;}).join(" "),gems:gemsEarned});

@@ -165,6 +165,9 @@ button.chip{cursor:pointer}
 .meter{height:12px;border-radius:999px;background:var(--line);overflow:hidden}
 .meter i{display:block;height:100%;width:0;background:var(--honey);transition:width .15s}
 .live{display:flex;gap:10px}
+.fixit{display:inline-flex;align-items:center;gap:8px;background:var(--honey-soft);border:2px solid var(--honey);border-radius:12px;padding:6px 14px;font-family:var(--display);font-weight:700;font-size:20px;animation:popm .35s both}
+.fixit .skey{font-family:var(--mono);font-weight:600;font-size:18px;border:2px solid var(--line);border-bottom-width:4px;border-radius:8px;padding:0 10px;background:var(--key)}
+.fixdots{letter-spacing:4px;color:var(--honey)}
 .tip{font-size:17px;background:var(--honey-soft);border-radius:14px;padding:10px 16px}
 .stage{position:relative}
 .text{font-family:var(--mono);font-size:clamp(24px,3.4vw,34px);line-height:1.75;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px 26px}
@@ -216,7 +219,7 @@ button.chip{cursor:pointer}
 .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}
 .confetti i{position:absolute;top:-30px;font-size:24px;animation:fall 1.8s ease-in forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(260deg)}}
-@media (prefers-reduced-motion: reduce){.pet.pop,.pet.v-rainbow .pe,.bigstars .on,.cheerpal,.jackpot h1,.mound.pop,.dword.shake{animation:none!important}.confetti{display:none}.k.target{transform:none}.meter i{transition:none}}
+@media (prefers-reduced-motion: reduce){.pet.pop,.fixit,.pet.v-rainbow .pe,.bigstars .on,.cheerpal,.jackpot h1,.mound.pop,.dword.shake{animation:none!important}.confetti{display:none}.k.target{transform:none}.meter i{transition:none}}
 </style>
 </head>
 <body>
@@ -988,17 +991,21 @@ function paint(){
     box.scrollTop=Math.max(0, top-lh*1.1); }
   document.querySelectorAll(".k.target").forEach(function(k){k.classList.remove("target");});
   var c=L.text[L.i], hint=document.getElementById("hint");
-  if(c!==undefined){
+  if(L.fix){ /* fix-it moment: type the missed key 5 times, keyboard showing the finger */
+    var fk=keyEl(L.fix.k); if(fk) fk.classList.add("target"); var dots=""; for(var d=0;d<FIX_N;d++) dots+=d<L.fix.n?"●":"○";
+    hint.innerHTML="<span class=\"fixit\">Fix-it! <span class=\"skey\">"+esc(keyLabel(L.fix.k))+"</span> "+SHORTF[FINGER[L.fix.k]]+" <span class=\"fixdots\">"+dots+"</span></span>";
+  } else if(c!==undefined){
     var b=baseKey(c), ke=keyEl(b); if(ke) ke.classList.add("target");
     var shiftTxt="";
     if(needsShift(c)){ var s=shiftFor(c); var se=keyEl(s); if(se) se.classList.add("target"); shiftTxt=" + <b>Shift</b> with your "+(s==="shiftL"?"left":"right")+" pinky"; }
     hint.innerHTML = (L.oops ? "Try again: " : "")+"<b>"+esc(c===" "?"Space":c)+"</b> · "+SHORTF[FINGER[b]]+(needsShift(c)?" + Shift":"");
   }
-  var kw=document.getElementById("kbwrap"); if(kw) kw.classList.toggle("faded", !!(L.fade && !L.oops && L.ready));
+  var kw=document.getElementById("kbwrap"); if(kw) kw.classList.toggle("faded", !!(L.fade && !L.oops && !L.fix && L.ready));
   var tot=L.text.length, missN=Object.keys(L.firstMiss).length, typed=L.i;
   document.getElementById("bar").style.width=(100*typed/tot)+"%";
   document.getElementById("acc").textContent=(typed>=10?Math.round(100*(typed-missN)/typed):100)+"%";
 }
+var FIX_N=5;
 function keyEl(id){ var all=document.querySelectorAll(".k"); for(var i=0;i<all.length;i++){ if(all[i].dataset.k===id) return all[i]; } return null; }
 function wpm(){ if(!L||!L.started||L.active<1500) return 0; return Math.round((L.i/5)/(L.active/60000)); }
 
@@ -1010,6 +1017,10 @@ document.addEventListener("keydown",function(e){
   if(e.key.length!==1) { if(e.key==="Backspace") e.preventDefault(); return; }
   e.preventDefault();
   if(!L.ready){ if(e.key===" "){ L.ready=true; setOverlay(false); paint(); } return; }
+  if(L.fix){ /* fix-it moment (Shawn, 2026-11-03: learn the key she keeps missing by doing it) */
+    if(e.key.toLowerCase()===L.fix.k){ L.fix.n++; sndKey(); if(L.fix.n>=FIX_N){ L.fix=null; L.oops=false; tone(880,0.12,0.06,"sine"); tone(1320,0.15,0.05,"sine",0.08); L.last=performance.now(); } }
+    else sndOops();
+    paint(); return; }
   if(L.i===0&&!L.started) stopVoice();
   var now=performance.now();
   if(!L.started){L.started=true; L.last=now;} else { L.active+=Math.min(now-L.last,3000); L.last=now; }
@@ -1022,6 +1033,8 @@ document.addEventListener("keydown",function(e){
   } else {
     if(!L.firstMiss[L.i]){ L.firstMiss[L.i]=1; S.kErr[b]=(S.kErr[b]||0)+1; }
     L.oops=true; sndOops();
+    L.km=L.km||{}; L.fixed=L.fixed||{}; L.km[b]=(L.km[b]||0)+1;
+    if(L.km[b]===2 && !L.fixed[b] && FINGER[b] && /^[a-z0-9;,.\/']$/.test(b)){ L.fixed[b]=1; L.fix={k:b,n:0}; tone(523,0.12,0.05,"triangle"); tone(392,0.16,0.05,"triangle",0.1); }
   }
   paint();
 });

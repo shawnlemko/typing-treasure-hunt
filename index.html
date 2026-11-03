@@ -733,7 +733,8 @@ var FIXED_LINES={
   "story-2":"The Bear, part two.",
   "story-3":"The Bear, part three. The big finish!",
   "intro":"Before we start: sit tall, feet flat, and eyes on the screen. Your fingers rest on A S D F, and J K L semicolon.",
-  "who":"Who's practising today?",
+  "who2":"Who's typing today?",
+  "kind-message":"You have a message! Type it to send it.",
   "cheer3-0":"Treasure found!","cheer3-1":"Super careful paws!","cheer3-2":"Wow, nearly perfect!",
   "cheer2-0":"Great digging!","cheer2-1":"Nice work, explorer!","cheer2-2":"So close to three stars!",
   "cheer1-0":"You unlocked the next stop!","cheer1-1":"Good job. Keep going!",
@@ -771,7 +772,7 @@ function renderPicker(){
   app.querySelectorAll(".who").forEach(function(b){ b.onclick=function(){ switchStudent(b.dataset.id); renderMap(); }; });
   document.getElementById("addform").onsubmit=function(e){ e.preventDefault(); var id=addStudent(document.getElementById("whoname").value); if(id){ switchStudent(id); renderMap(); } };
   if(!list) document.getElementById("whoname").focus();
-  play("who");
+  play("who2");
 }
 /* ---------- Map (home): quest + one area at a time ---------- */
 var viewUnit=null;

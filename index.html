@@ -254,7 +254,7 @@ var WORDS=("a as ad add adds all ask asks sad lad dad dads fad fall falls salad 
 "box fox six mix wax tax next exit extra bag big bug bee bear bears bed bell berry berries bird birds boat book books bone bow bowl brave bread brick bridge bright brown bubble bush bunny butter buzz zoo zip zebra zero size prize puzzle lazy frozen fizz jazz dozen breeze maze "+
 "treasure treasures gem gems gold golden jewel jewels map maps island hidden secret clue clues dig digging compass pirate ship anchor lantern rope ladder pebble shells explore explorer search found finding scissors glue glitter paint ribbon string button beads sparkle sticker").split(" ").filter(Boolean);
 var NAMES="Sam Kate Jake Liam Ava Noah Mia Leo Ella Owen Ruby Finn Zoe Max Ivy Hugo Nora Theo Lily Jack Quinn Willa Uma Rosa Dev Gus Bea Pip".split(" ");
-var SENT=["The cub sat by the lake.","A fox ran into the woods.","We found a red gem in the sand.","The owl hooted at the moon.","I like to paint and draw.","My map shows a hidden cave.","The otter swam past the rocks.","She made a crown of paper.","A deer drank from the river.","We dug a hole and found a coin.","The bees buzzed over the flowers.","I glued shells on a box."];
+var SENT=["The cub ran.","I see a fox.","We dig.","A bee is big.","I like it.","The owl hid.","We found a gem.","Look at the map.","The cub sat by the lake.","A fox ran into the woods.","We found a red gem in the sand.","The owl hooted at the moon.","I like to paint and draw.","My map shows a hidden cave.","The otter swam past the rocks.","She made a crown of paper.","A deer drank from the river.","We dug a hole and found a coin.","The bees buzzed over the flowers.","I glued shells on a box."];
 var PUNCT=["Where is the map? It's in my bag.","Can you see it? It's a gold coin.","We packed rope, glue, and string.","Is that a fox? Yes, it's a red fox.","What's in the chest? I can't tell yet.","The owl, the fox, and the deer are friends.","Who hid the clue? I don't know.","Let's dig here. I think it's the spot."];
 var FACTS=["Bears can smell food from miles away.","Sea otters hold paws while they sleep so they do not drift apart.","An octopus has three hearts and blue blood.","Owls cannot move their eyes, so they turn their heads instead.","A baby kangaroo is called a joey.","Honeybees dance to tell each other where the flowers are.","Snowflakes are made of tiny ice crystals.","A group of flamingos is called a flamboyance.","Salmon swim back to the river where they were born.","A hummingbird can fly backward.","Some parrots can live for more than fifty years.","Elephants can hear sounds through their feet."];
 var STORY=[
@@ -423,6 +423,8 @@ function trickyKeys(){
 }
 
 /* ---------- Text generators ---------- */
+function byLength(a){ return a.slice().sort(function(x,y){return x.length-y.length;}); }
+function shortToLong(a){ return byLength(a).join(" "); }
 function rnd(a){return a[Math.floor(Math.random()*a.length)];}
 function shuffle(a){a=a.slice(); for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t;} return a;}
 function groups(pool,focus,n,minL,maxL,focusP){
@@ -469,11 +471,12 @@ function buildTextFull(l){
     case "words": { var w=wordsFor(l.learned,l.f,13); if(!w) return drill(l.f,l.learned);
       if(l.learned.indexOf(".")>=0){ w=w.map(function(x,i){return (i%4===3)?x+".":(i%5===2?x+",":x);}); } return w.concat(trickyBits(l.learned)).join(" "); }
     case "caps": return shuffle(NAMES).slice(0,11).join(" ");
-    case "sent": return shuffle(SENT).slice(0,3).join(" ");
-    case "punct": return shuffle(PUNCT).slice(0,3).join(" ");
-    case "facts": return shuffle(FACTS).slice(0,3).join(" ");
+    /* short sentences first (Shawn, 2026-11-03): easier pools early, and each lesson goes short to long */
+    case "sent": return shortToLong(shuffle(byLength(SENT).slice(0,10)).slice(0,3));
+    case "punct": return shortToLong(shuffle(byLength(PUNCT).slice(0,6)).slice(0,3));
+    case "facts": var fl=byLength(FACTS), half=Math.ceil(fl.length/2); return shortToLong(shuffle(/^More/.test(l.t)?fl.slice(half-2):fl.slice(0,half)).slice(0,3));
     case "story": return STORY[l.part];
-    case "nums": return shuffle(NUMS).slice(0,3).join(" ");
+    case "nums": return shortToLong(shuffle(NUMS).slice(0,3));
     case "tricky": { var tk=l.k.split(""), learned=learnedNow(); var g=groups(tk.concat(letterPool(learned)).filter(function(x){return /[a-z0-9]/.test(x);}),tk,6,2,4,0.7);
       var w=wordsFor(learned,l.k,8)||[]; return g.concat(w).join(" "); }
     case "custom": return l.text;

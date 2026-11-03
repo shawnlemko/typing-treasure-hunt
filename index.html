@@ -67,9 +67,10 @@ button:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-v
 .goal span{font-size:14px;color:var(--muted)}
 .next-up{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .friends{display:flex;flex-direction:column;gap:10px}
-.friend-row{display:flex;flex-wrap:wrap;gap:8px}
-.friend{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:26px;background:var(--sunk);border:1px solid var(--line)}
-.friend.locked{font-family:var(--display);font-size:20px;color:var(--muted)}
+.friend-row{display:flex;flex-wrap:wrap;gap:12px}
+.fcard{display:flex;flex-direction:column;align-items:center;gap:6px;width:110px;text-align:center;font-family:var(--display);font-weight:600;font-size:16px;line-height:1.2}
+.friend{width:84px;height:84px;border-radius:20px;display:grid;place-items:center;font-size:52px;background:var(--sunk);border:1px solid var(--line)}
+.friend.locked{font-family:var(--display);font-size:30px;color:var(--muted)}
 
 /* Trail map */
 .unit{display:flex;flex-direction:column;gap:12px}
@@ -119,7 +120,8 @@ button:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-v
 .rgoal{display:flex;align-items:center;gap:12px;font-family:var(--display);font-size:17px}
 .revealed{display:flex;flex-direction:column;align-items:center;gap:6px}
 .petrow{display:flex;flex-wrap:wrap;gap:14px}
-.petcard{display:flex;flex-direction:column;align-items:center;gap:4px;width:96px;text-align:center;font-size:13px;padding-top:12px}
+.petcard{display:flex;flex-direction:column;align-items:center;gap:6px;width:116px;text-align:center;font-family:var(--display);font-weight:600;font-size:16px;line-height:1.2;padding-top:12px}
+.petcard .pet{font-size:56px}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .dig{display:flex;flex-direction:column;align-items:center;gap:14px;padding:30px 20px;text-align:center}
 .mound{font-size:80px;line-height:1}
@@ -769,7 +771,7 @@ function unitOpen(ui){ return unlocked(COURSE[ui].lessons[0].idx); }
 /* ---------- Treasures: animals + scavenger hunt ---------- */
 function renderTreasures(){
   stopLesson(); currentView="treasures";
-  var friends=COURSE.map(function(u,ui){ return unitDone(ui) ? "<div class=\"friend\" title=\""+esc(u.friend)+"\">"+u.animal+"</div>" : "<div class=\"friend locked\">?</div>"; }).join("");
+  var friends=COURSE.map(function(u,ui){ return unitDone(ui) ? "<div class=\"fcard\"><div class=\"friend\">"+u.animal+"</div><span>"+esc(u.friend.split(" the ")[0])+"</span></div>" : "<div class=\"fcard\"><div class=\"friend locked\">?</div></div>"; }).join("");
   var todo=0; /* show what she has found plus the next 3 to look for (keeps the list short) */
   var finds=FINDS.filter(function(f){ if(S.finds[f.id]) return true; todo++; return todo<=3; }).map(function(f){var got=!!S.finds[f.id]; return "<li class=\""+(got?"found":"")+"\"><span class=\"tick\" aria-hidden=\"true\">"+(got?"✓":"")+"</span><span><b>"+esc(f.t)+"</b>: "+esc(f.d)+"</span></li>";}).join("");
   app.innerHTML="<header class=\"top\"><h1>My treasures</h1>"+backBtn("back3")+"</header>"+

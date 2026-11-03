@@ -199,6 +199,12 @@ button.chip{cursor:pointer}
 .result{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:30px 20px}
 .bigstars{font-size:54px;letter-spacing:8px;color:var(--honey);line-height:1}
 .bigstars .off{color:var(--line)}
+.bigstars .on{display:inline-block;animation:starpop .45s cubic-bezier(.3,1.7,.5,1) both}
+.cheerpal{font-size:60px;line-height:1;display:inline-block;animation:hop .5s ease-out 3}
+.cheerpal.pet{font-size:60px}
+.jackpot h1{animation:popm .5s .9s both}
+@keyframes starpop{0%{transform:scale(0) rotate(-60deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes hop{0%,100%{transform:translateY(0) rotate(0)}40%{transform:translateY(-22px) rotate(-8deg)}70%{transform:translateY(0) rotate(6deg)}}
 .stats{display:flex;gap:28px;flex-wrap:wrap;justify-content:center}
 .stat b{display:block;font-family:var(--display);font-size:34px;font-variant-numeric:tabular-nums}
 .stat span{color:var(--muted);font-size:15px}
@@ -208,7 +214,7 @@ button.chip{cursor:pointer}
 .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}
 .confetti i{position:absolute;top:-30px;font-size:24px;animation:fall 1.8s ease-in forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(260deg)}}
-@media (prefers-reduced-motion: reduce){.pet.pop,.pet.v-rainbow .pe,.mound.pop,.dword.shake{animation:none!important}.confetti{display:none}.k.target{transform:none}.meter i{transition:none}}
+@media (prefers-reduced-motion: reduce){.pet.pop,.pet.v-rainbow .pe,.bigstars .on,.cheerpal,.jackpot h1,.mound.pop,.dword.shake{animation:none!important}.confetti{display:none}.k.target{transform:none}.meter i{transition:none}}
 </style>
 </head>
 <body>
@@ -254,28 +260,28 @@ var NUMS=["A spider has 8 legs.","There are 365 days in a year.","We found 12 ge
 
 /* ---------- Course ---------- */
 var COURSE=[
- {name:"Home Row Camp",animal:"🐻",friend:"Bear cub",note:"Where your fingers live. F and J have little bumps.",lessons:[
+ {name:"Home Row Camp",animal:"🐻",friend:"Honeybun the bear cub",note:"Where your fingers live. F and J have little bumps.",lessons:[
   {t:"F and J",k:"fj",kind:"drill"},{t:"D and K",k:"dk",kind:"drill"},{t:"S and L",k:"sl",kind:"drill"},
   {t:"A and ;",k:"a;",kind:"drill"},{t:"Home row mix",kind:"mix"},{t:"First words",kind:"words",f:"asdfjkl"}]},
- {name:"Owl Tree",animal:"🦉",friend:"Owl",note:"Reach up to the top row, then come back home.",lessons:[
+ {name:"Owl Tree",animal:"🦉",friend:"Professor Hootenanny the owl",note:"Reach up to the top row, then come back home.",lessons:[
   {t:"E and I",k:"ei",kind:"drill"},{t:"E and I words",kind:"words",f:"ei"},
   {t:"R and U",k:"ru",kind:"drill"},{t:"R and U words",kind:"words",f:"ru"},
   {t:"G and H",k:"gh",kind:"drill"},{t:"G and H words",kind:"words",f:"gh"},
   {t:"T and Y",k:"ty",kind:"drill"},{t:"T and Y words",kind:"words",f:"ty"}]},
- {name:"Otter Falls",animal:"🦦",friend:"Otter",note:"Ring fingers and pinkies join the team.",lessons:[
+ {name:"Otter Falls",animal:"🦦",friend:"Splish the otter",note:"Ring fingers and pinkies join the team.",lessons:[
   {t:"O and W",k:"ow",kind:"drill"},{t:"O and W words",kind:"words",f:"ow"},
   {t:"P and Q",k:"pq",kind:"drill"},{t:"P and Q words",kind:"words",f:"pq"},{t:"Top row mix",kind:"mix"}]},
- {name:"Fox Den",animal:"🦊",friend:"Fox",note:"Reach down to the bottom row, then back home.",lessons:[
+ {name:"Fox Den",animal:"🦊",friend:"Foxy Pockets the fox",note:"Reach down to the bottom row, then back home.",lessons:[
   {t:"N and M",k:"nm",kind:"drill"},{t:"N and M words",kind:"words",f:"nm"},
   {t:"C and V",k:"cv",kind:"drill"},{t:"C and V words",kind:"words",f:"cv"},
   {t:"B and X",k:"bx",kind:"drill"},{t:"B and X words",kind:"words",f:"bx"},
   {t:"Z , and .",k:"z,.",kind:"drill"},{t:"Every letter",kind:"words",f:"zxqjvkbpy"}]},
- {name:"Turtle Beach",animal:"🐢",friend:"Turtle",note:"Hold Shift with the pinky on the other hand.",lessons:[
+ {name:"Turtle Beach",animal:"🐢",friend:"Shelly Slowpoke the turtle",note:"Hold Shift with the pinky on the other hand.",lessons:[
   {t:"Capital letters",kind:"caps"},{t:"Sentences",kind:"sent"},{t:"? and '",k:"?'",kind:"punct"}]},
- {name:"Story Woods",animal:"🐟",friend:"Salmon",note:"Real sentences. Eyes on the screen, not your hands.",lessons:[
+ {name:"Story Woods",animal:"🐟",friend:"Sir Swims-a-Lot the salmon",note:"Real sentences. Eyes on the screen, not your hands.",lessons:[
   {t:"Animal facts",kind:"facts"},{t:"More animal facts",kind:"facts"},
   {t:"The Bear, part 1",kind:"story",part:0},{t:"The Bear, part 2",kind:"story",part:1},{t:"The Bear, part 3",kind:"story",part:2}]},
- {name:"Octopus Reef",animal:"🐙",friend:"Octopus",note:"The number row is the longest reach. Go slowly.",lessons:[
+ {name:"Octopus Reef",animal:"🐙",friend:"Octavia Eight-Arms the octopus",note:"The number row is the longest reach. Go slowly.",lessons:[
   {t:"1 to 5",k:"12345",kind:"drill"},{t:"6 to 0",k:"67890",kind:"drill"},{t:"Numbers in sentences",kind:"nums"}]}
 ];
 var LESSONS=[]; (function(){var learned=""; COURSE.forEach(function(u,ui){u.lessons.forEach(function(l){
@@ -490,30 +496,30 @@ function sndWin(){ [523,659,784,1047].forEach(function(f,i){ tone(f,0.18,0.06,"s
 
 /* ---------- Animal farm ---------- */
 var FARM=[
- {id:"chick",e:"🐥",n:"Peep",p:5,q:"I'm not small. I'm fun-sized."},
- {id:"bunny",e:"🐰",n:"Sir Hops-a-Lot",p:8,q:"I ate a carrot so fast I forgot to chew."},
+ {id:"chick",e:"🐥",n:"Nugget McFluff",p:5,q:"I'm not small. I'm fun-sized."},
+ {id:"bunny",e:"🐰",n:"Bun Bun Wigglenose",p:8,q:"I ate a carrot so fast I forgot to chew."},
  {id:"pig",e:"🐷",n:"Princess Snortleberry",p:10,q:"Oink means I love you. Or snack. Mostly snack."},
- {id:"duck",e:"🦆",n:"Quackers McGee",p:10,q:"I put the QUACK in quick typing."},
- {id:"cow",e:"🐮",n:"Moo-riel",p:12,q:"I'm udderly happy to meet you."},
- {id:"sheep",e:"🐑",n:"Fluffernutter",p:12,q:"I'm 90% wool and 10% naps."},
+ {id:"duck",e:"🦆",n:"Waddles McQuackface",p:10,q:"I put the QUACK in quick typing."},
+ {id:"cow",e:"🐮",n:"Moozy Buttercup",p:12,q:"I'm udderly happy to meet you."},
+ {id:"sheep",e:"🐑",n:"Baa-bara Fluffernutter",p:12,q:"I'm 90% wool and 10% naps."},
  {id:"goat",e:"🐐",n:"Captain Nibbles",p:15,q:"I ate a sock. It was a very good sock."},
- {id:"hamster",e:"🐹",n:"Cheeks",p:15,q:"I'm saving these seeds for later. Later is now."},
- {id:"cat",e:"🐱",n:"Mittens the Magnificent",p:18,q:"I knocked your pencil off the desk. You're welcome."},
- {id:"dog",e:"🐶",n:"Biscuit",p:18,q:"Is it walk time? Is it? IS IT?"},
- {id:"horse",e:"🐴",n:"Sir Neighs-a-Lot",p:20,q:"Hay is for horses. Lucky me!"},
- {id:"turkey",e:"🦃",n:"Gobbledy",p:20,q:"Gobble gobble. That's all I've got."},
- {id:"frog",e:"🐸",n:"Lord Ribbit",p:22,q:"I can jump super high. Watch. ...I'm resting."},
- {id:"hedgehog",e:"🦔",n:"Pokey",p:25,q:"Hugs available. Carefully."},
+ {id:"hamster",e:"🐹",n:"Sir Snacks-a-Lot",p:15,q:"I'm saving these seeds for later. Later is now."},
+ {id:"cat",e:"🐱",n:"Lady Purrsworth Fluffington",p:18,q:"I knocked your pencil off the desk. You're welcome."},
+ {id:"dog",e:"🐶",n:"Biscuit Wagglebottom",p:18,q:"Is it walk time? Is it? IS IT?"},
+ {id:"horse",e:"🐴",n:"Neigh-thaniel",p:20,q:"Hay is for horses. Lucky me!"},
+ {id:"turkey",e:"🦃",n:"Gobbles McWobble",p:20,q:"Gobble gobble. That's all I've got."},
+ {id:"frog",e:"🐸",n:"Ribbity Jiggles",p:22,q:"I can jump super high. Watch. ...I'm resting."},
+ {id:"hedgehog",e:"🦔",n:"Spike McSnuggles",p:25,q:"Hugs available. Carefully."},
  {id:"llama",e:"🦙",n:"Dolly Llama",p:28,q:"No drama. Just llama."},
- {id:"panda",e:"🐼",n:"Bamboozle",p:30,q:"I eat bamboo all day. Living the dream."},
- {id:"koala",e:"🐨",n:"Sleepy Sue",p:30,q:"Zzz... oh, hi... zzz..."},
- {id:"penguin",e:"🐧",n:"Tux",p:32,q:"I wear a fancy suit every day, just in case."},
- {id:"otter",e:"🦦",n:"Splashy",p:35,q:"I have a favourite rock. Want to see it? No."},
+ {id:"panda",e:"🐼",n:"Pandy Puddingpaws",p:30,q:"I eat bamboo all day. Living the dream."},
+ {id:"koala",e:"🐨",n:"Snoozy McSnoozeface",p:30,q:"Zzz... oh, hi... zzz..."},
+ {id:"penguin",e:"🐧",n:"Waddlesworth Tuxedo",p:32,q:"I wear a fancy suit every day, just in case."},
+ {id:"otter",e:"🦦",n:"Otterly Adorable",p:35,q:"I have a favourite rock. Want to see it? No."},
  {id:"sloth",e:"🦥",n:"Speedy",p:35,q:"I... will... finish... this... tomorrow."},
- {id:"flamingo",e:"🦩",n:"Flamingo Fred",p:40,q:"I stand on one leg so the other one can nap."},
- {id:"tiger",e:"🐯",n:"Stripes",p:45,q:"I'm a very big cat. Do you have a very big lap?"},
- {id:"unicorn",e:"🦄",n:"Sparkle Toes",p:50,q:"Yes, I'm real. Please stop asking the goat."},
- {id:"dragon",e:"🐉",n:"Toasty",p:60,q:"I only breathe fire on marshmallows."}
+ {id:"flamingo",e:"🦩",n:"Pinky McLongleg",p:40,q:"I stand on one leg so the other one can nap."},
+ {id:"tiger",e:"🐯",n:"Mr. Snuggle Stripes",p:45,q:"I'm a very big cat. Do you have a very big lap?"},
+ {id:"unicorn",e:"🦄",n:"Princess Sparkle Toes",p:50,q:"Yes, I'm real. Please stop asking the goat."},
+ {id:"dragon",e:"🐉",n:"Toasty Marshmallow",p:60,q:"I only breathe fire on marshmallows."}
 ];
 var OUTFITS=[
  {id:"bow",e:"🎀",n:"bow",p:5},{id:"cap",e:"🧢",n:"cap",p:6},{id:"flower",e:"🌸",n:"flower",p:6},
@@ -565,15 +571,15 @@ function bindReward(after){
 }
 function applyReward(o){
   S.gems-=o.p; var res;
-  if(o.type==="animal"){ S.farm[o.id]={outfits:{},wear:"",v:"",vs:{}}; res={id:o.id,line:pet(o.id).q,title:"Meet "+pet(o.id).n+"!",clip:"pet-"+o.id}; }
+  if(o.type==="animal"){ S.farm[o.id]={outfits:{},wear:"",v:"",vs:{}}; res={id:o.id,line:pet(o.id).q,title:"Meet "+pet(o.id).n+"!",clip:"pet2-"+o.id}; }
   else if(o.type==="outfit"){ var st=petState(o.id), ot=OUTFITS.filter(function(x){return x.id===o.o;})[0]; st.outfits[o.o]=1; st.wear=o.o;
     res={id:o.id,title:"Looking good!",clip:"outfit",line:rnd(OUTFIT_JOKES).replace("{n}",pet(o.id).n.split(" ")[0]).replace("{o}",ot.n)}; }
   else {
     var cheap=FARM.filter(function(a){return !S.farm[a.id]&&a.p<=25;});
     var vOwned=ownedPets().filter(function(id){var st=petState(id); return !(st.vs.gold&&st.vs.rainbow);});
-    if(cheap.length&&(!vOwned.length||Math.random()<0.45)){ var a=rnd(cheap); S.farm[a.id]={outfits:{},wear:"",v:"",vs:{}}; res={id:a.id,title:"It hatched! Meet "+a.n+"!",line:a.q,clip:"pet-"+a.id}; }
+    if(cheap.length&&(!vOwned.length||Math.random()<0.45)){ var a=rnd(cheap); S.farm[a.id]={outfits:{},wear:"",v:"",vs:{}}; res={id:a.id,title:"It hatched! Meet "+a.n+"!",line:a.q,clip:"pet2-"+a.id}; }
     else { var id=rnd(vOwned), st2=petState(id), v=!st2.vs.gold&&(st2.vs.rainbow||Math.random()<0.6)?"gold":"rainbow"; st2.vs[v]=1; st2.v=v;
-      res={id:id,clip:v,title:"Rare! A "+(v==="gold"?"golden":"rainbow")+" "+pet(id).n.split(" ")[0]+"!",line:v==="gold"?"So shiny. Please wear sunglasses.":"Every colour. Even the secret ones."}; }
+      res={id:id,clip:v,title:"Rare! A "+(v==="gold"?"golden":"rainbow")+" "+pet(id).n+"!",line:v==="gold"?"So shiny. Please wear sunglasses.":"Every colour. Even the secret ones."}; }
   }
   save(); return res;
 }
@@ -696,7 +702,7 @@ function allPhrases(){
   var out=[];
   LESSONS.forEach(function(l){ var t=spokenFor(l); if(t) out.push({key:clipFor(l),text:t}); });
   Object.keys(FIXED_LINES).forEach(function(k){ out.push({key:k,text:FIXED_LINES[k]}); });
-  FARM.forEach(function(a){ out.push({key:"pet-"+a.id,text:petLine(a)}); });
+  FARM.forEach(function(a){ out.push({key:"pet2-"+a.id,text:petLine(a)}); });
   return out;
 }
 function play(key){
@@ -769,7 +775,7 @@ function renderTreasures(){
   app.innerHTML="<header class=\"top\"><h1>My treasures</h1>"+backBtn("back3")+"</header>"+
     "<section class=\"card friends\"><h2>Animal friends</h2><div class=\"friend-row\">"+friends+"</div></section>"+
     (ownedPets().length?"<section class=\"card friends\"><h2>My animals <span class=\"muted\" style=\"font-size:16px\">"+ownedPets().length+" of "+FARM.length+"</span></h2><div class=\"petrow\">"+ownedPets().map(function(id){ var vs=petState(id).vs||{}; /* rare looks are extra animals; she keeps the plain one too (Shawn, 2026-11-03) */
-      return ["","gold","rainbow"].filter(function(v){return !v||vs[v];}).map(function(v){ return "<div class=\"petcard\">"+petHtml(id,"",v)+"<span>"+(v==="gold"?"Golden ":v==="rainbow"?"Rainbow ":"")+esc(v?pet(id).n.split(" ")[0]:pet(id).n)+"</span></div>"; }).join(""); }).join("")+"</div></section>":"")+
+      return ["","gold","rainbow"].filter(function(v){return !v||vs[v];}).map(function(v){ return "<div class=\"petcard\">"+petHtml(id,"",v)+"<span>"+(v==="gold"?"Golden ":v==="rainbow"?"Rainbow ":"")+esc(pet(id).n)+"</span></div>"; }).join(""); }).join("")+"</div></section>":"")+
     "<section class=\"card\" style=\"display:flex;flex-direction:column;gap:12px\"><h2>Scavenger hunt <span class=\"muted\" style=\"font-size:16px\">"+FINDS.filter(function(f){return S.finds[f.id];}).length+" of "+FINDS.length+"</span></h2><ul class=\"finds\">"+finds+"</ul></section>";
   window.scrollTo(0,0);
   document.getElementById("back3").onclick=renderMap;
@@ -1071,12 +1077,14 @@ function finish(){
   else { title="Almost there!"; clip="cheer0"; }
   if(questDone) clip="quest"; else if(newFriend) clip="friend";
   var hasNext = l.id && l.idx<LESSONS.length-1;
-  var h="<div class=\"card result\">"+starsHtml(stars,"bigstars")+"<h1>"+esc(title)+"</h1>";
+  var pals=ownedPets(), pal=stars>0?(pals.length?petHtml(rnd(pals),"cheerpal"):"<span class=\"cheerpal\">"+COURSE[l.unit!==undefined?l.unit:0].animal+"</span>"):"";
+  var bigStars="<span class=\"bigstars\" aria-label=\""+stars+" of 3 stars\">"; for(var si=0;si<3;si++) bigStars+= si<stars?"<span class=\"on\" style=\"animation-delay:"+(0.15+si*0.3)+"s\">★</span>":"<span class=\"off\">★</span>"; bigStars+="</span>";
+  var h="<div class=\"card result"+(stars===3?" jackpot":"")+"\">"+pal+bigStars+"<h1>"+esc(title)+"</h1>";
   if(stars===0) h+="<p style=\"max-width:44ch\">Get 90% to unlock the next stop. Go a little slower.</p>";
   h+="<div class=\"stats\"><div class=\"stat\"><b>"+acc+"%</b><span>accuracy</span></div><div class=\"stat\"><b>"+sp+"</b><span>words a minute</span></div>"+
-     (gemsEarned?"<div class=\"stat\"><b>+"+gemsEarned+" 💎</b><span>gems</span></div>":"")+"</div>";
+     (gemsEarned?"<div class=\"stat\"><b id=\"gemct\">+0 💎</b><span>gems</span></div>":"")+"</div>";
   var notes=[];
-  if(newFriend) notes.push("You met a new friend: the "+newFriend.friend+" "+newFriend.animal);
+  if(newFriend) notes.push("New friend: "+newFriend.friend+" "+newFriend.animal);
   if(questDone) notes.push("Today's quest is complete! +5 bonus gems");
   if(recordSpeed) notes.push("New speed record: "+sp+" words a minute");
   newFinds.forEach(function(t){ if(!(questDone&&t==="Quest complete")) notes.push("Treasure found: "+t);});
@@ -1095,12 +1103,19 @@ function finish(){
   var dgb=document.getElementById("digb"); if(dgb) dgb.onclick=renderDig;
   var nb=document.getElementById("nextb"); if(nb){ nb.onclick=function(){startLesson(LESSONS[l.idx+1]);}; nb.focus(); }
   bindReward(function(){ var f=document.getElementById("digb")||nb||document.getElementById("again"); if(f) f.focus(); });
-  if(stars>0){ confetti(stars+(newFriend||questDone?3:0)); sndWin(); }
+  if(stars>0){ celebrate(stars,gemsEarned,newFriend||questDone); }
   setTimeout(function(){ play(clip); }, stars>0?450:0);
+}
+/* lesson finish: stars pop in one by one with rising dings, gems count up, a friend hops, confetti bursts (about 1.5 s) */
+function celebrate(stars,gems,big){
+  for(var i=0;i<stars;i++) tone(660*Math.pow(1.26,i),0.16,0.07,"triangle",0.15+i*0.3);
+  setTimeout(function(){ sndWin(); confetti(stars+(big?3:0)+(stars===3?2:0)); }, 150+stars*300);
+  var el=document.getElementById("gemct"), n=0;
+  if(el&&gems){ var t=setInterval(function(){ n++; if(!el.isConnected){clearInterval(t);return;} el.textContent="+"+n+" 💎"; if(n>=gems) clearInterval(t); }, Math.max(60,700/gems)); }
 }
 function confetti(n){
   if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  var box=document.createElement("div"); box.className="confetti"; var items=["💎","⭐","🪙","🐾"];
+  var box=document.createElement("div"); box.className="confetti"; var items=["💎","⭐","🪙","🐾","🎉","✨","🦴","🥕"];
   for(var i=0;i<n*6;i++){ var e=document.createElement("i"); e.textContent=rnd(items); e.style.left=(Math.random()*100)+"%"; e.style.animationDelay=(Math.random()*0.6)+"s"; box.appendChild(e); }
   document.body.appendChild(box); setTimeout(function(){box.remove();},2800);
 }

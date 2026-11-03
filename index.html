@@ -456,7 +456,7 @@ function trickyBits(learned){
 var LESSON_LENGTH=0.75; /* share of the original lesson length (Shawn, 2026-11-03) */
 function buildText(l){
   var t=buildTextFull(l);
-  if(l.kind==="story"||l.kind==="custom") return t;
+  if(l.kind==="story"||l.kind==="custom"||l.kind==="message") return t;
   if(/[.?!]$/.test(t) && /[.?!] [A-Z0-9]/.test(t)){ // sentence lessons: keep whole sentences
     var parts=t.match(/[^.?!]+[.?!]+(\s|$)/g)||[t], out="", total=t.length;
     for(var i=0;i<parts.length;i++){ out+=parts[i]; if(out.length>=total*0.6) break; }
@@ -480,6 +480,7 @@ function buildTextFull(l){
     case "tricky": { var tk=l.k.split(""), learned=learnedNow(); var g=groups(tk.concat(letterPool(learned)).filter(function(x){return /[a-z0-9]/.test(x);}),tk,6,2,4,0.7);
       var w=wordsFor(learned,l.k,8)||[]; return g.concat(w).join(" "); }
     case "custom": return l.text;
+    case "message": return l.text;
   }
   return "fff jjj";
 }
@@ -594,6 +595,46 @@ function applyReward(o){
 function reveal(box,res){
   box.innerHTML="<div class=\"revealed\">"+petHtml(res.id,"big pop")+"<h3>"+esc(res.title)+"</h3><p>"+esc(res.line)+"</p><p class=\"muted\" style=\"font-size:14px\">💎 "+S.gems+" left</p></div>";
   sndWin(); setTimeout(function(){ play(res.clip); },300);
+}
+
+/* ---------- Pet's message (once a day, after her first lesson; Shawn, 2026-11-03) ----------
+   One of her animals asks her to type one short silly line to another animal, using only keys she has learned. */
+var NICK={chick:"Nugget",bunny:"Bun Bun",pig:"Snortleberry",duck:"Waddles",cow:"Moozy",sheep:"Fluffernutter",goat:"Nibbles",hamster:"Snacks",
+  cat:"Purrsworth",dog:"Biscuit",horse:"Neighthaniel",turkey:"Gobbles",frog:"Ribbity",hedgehog:"Spike",llama:"Dolly",panda:"Pandy",koala:"Snoozy",
+  penguin:"Waddlesworth",otter:"Otterly",sloth:"Speedy",flamingo:"Pinky",tiger:"Snuggles",unicorn:"Sparkle",dragon:"Toasty"};
+var MSGS=["{to}, your hat is on the cow.","{to}, I sat on a pie.","{to}, I ate your sock.","{to}, a frog is in my soup.","{to}, let's dig for gold.",
+  "{to}, the duck took the map.","{to}, you are my best friend.","{to}, I hid a cake in the hay.","{to}, why is the goat on the roof?","{to}, I need a nap.",
+  "{to}, I lost my tail.","{to}, all the jelly is gone.","{to}, a fish said hi.","{to}, I fell in the lake.","{to}, my feet smell like fudge.",
+  "{to}, the hen is the boss.","{to}, I dyed my fur red.","{to}, I like your silly face.",
+  "{to}, the tiger ate the fudge.","{to}, I dug a huge hill.","{to}, the hay is really tasty.","{to}, sit still!","{to}, your hat is too fluffy.","{to}, the goat ate your hat.","{to}, go dig for treasure!","{to}, a sheep sat on my head."];
+function fitKeys(t,learned){
+  var shift=learned.indexOf("⇧")>=0;
+  if(!(shift&&learned.indexOf("1")>=0)) t=t.replace(/!/g,".");
+  if(!(shift&&learned.indexOf("/")>=0)) t=t.replace(/\?/g,".");
+  if(!shift) t=t.toLowerCase();
+  if(learned.indexOf(",")<0) t=t.replace(/,/g,"");
+  if(learned.indexOf(".")<0) t=t.replace(/[.?]/g,"");
+  if(learned.indexOf("'")<0) t=t.replace(/'/g,"");
+  t=t.replace(/ +/g," ").trim();
+  var ok=t.split("").every(function(c){ if(c===" ") return true; if(c==="?"||c==="!") return true;
+    if(c>="A"&&c<="Z") return shift&&learned.indexOf(c.toLowerCase())>=0; return learned.indexOf(c)>=0; });
+  return ok&&t.length>=8?t:null;
+}
+function petMessage(){
+  var learned=learnedNow(), pals=ownedPets();
+  var friends=COURSE.filter(function(u,ui){return unitDone(ui);}).map(function(u){return {e:u.animal,name:u.friend.split(" the ")[0],nick:u.friend.split(" the ")[0].replace(/^(Professor|Sir|Lady|Mr\.?|Princess) /,"").split(" ")[0]};});
+  var cast=pals.map(function(id){return {id:id,e:pet(id).e,name:pet(id).n,nick:NICK[id]||pet(id).n.split(" ")[0]};}).concat(friends);
+  if(!cast.length) cast=[{e:COURSE[0].animal,name:"Honeybun",nick:"Honeybun"}];
+  cast=cast.concat([{e:"🐻",name:"Honeybun",nick:"Honeybun"}]).filter(function(c,i,a){return a.findIndex(function(x){return x.nick===c.nick;})===i;});
+  var tries=[]; cast.forEach(function(from){ cast.concat([{nick:"Honeybun"},{nick:"Moozy"},{nick:"Fluffy"},{nick:"Dusty"}]).forEach(function(to){ if(to.nick===from.nick) return;
+    MSGS.forEach(function(m){ var t=fitKeys(m.replace("{to}",to.nick),learned); if(t) tries.push({from:from,text:t}); }); }); });
+  return tries.length?rnd(tries):null;
+}
+function msgReady(){ return S.msgDay!==today() && todayCount()>=1 && !!petMessage(); }
+function startMessage(){
+  var m=petMessage(); if(!m) { renderMap(); return; }
+  S.msgDay=today(); save();
+  startLesson({t:"📨 "+m.from.e+" "+m.from.name,kind:"message",text:m.text,practice:true,mini:true,from:m.from});
 }
 
 /* ---------- Bonus dig (once a day, after the quest) ---------- */
@@ -747,7 +788,7 @@ function renderMap(){
   h+="<section class=\"card quest-main\"><h2>Today's quest</h2><div class=\"paws\">"+paws+"</div>"+
      "<p>"+(left>0 ? left+" more to go!" : "Quest done! Extra lessons earn bonus gems.")+"</p>"+
      "<div class=\"next-up\"><button class=\"btn primary big\" id=\"go\">Start: "+esc(LESSONS[nx].t)+"</button>"+
-     (digReady()?"<button class=\"btn big dig-btn\" id=\"dig\">⛏️ Bonus dig!</button>":"")+(tk.length?"<button class=\"btn big\" id=\"tricky\">Tricky keys</button>":"")+"</div></section>";
+     (digReady()?"<button class=\"btn big dig-btn\" id=\"dig\">⛏️ Bonus dig!</button>":"")+(msgReady()?"<button class=\"btn big\" id=\"msgb\">📨 A message!</button>":"")+(tk.length?"<button class=\"btn big\" id=\"tricky\">Tricky keys</button>":"")+"</div></section>";
   // area picker
   h+="<section class=\"unit\"><div class=\"areas\" role=\"tablist\">"+COURSE.map(function(u,ui){
       var open=unitOpen(ui), icon=unitDone(ui)?u.animal:(open?"🧭":"🔒");
@@ -767,6 +808,7 @@ function renderMap(){
   document.getElementById("treas").onclick=renderTreasures;
   document.getElementById("whochip").onclick=renderPicker;
   var db2=document.getElementById("dig"); if(db2) db2.onclick=renderDig;
+  var mb=document.getElementById("msgb"); if(mb) mb.onclick=startMessage;
   document.getElementById("grown").onclick=renderReport;
   var tb=document.getElementById("tricky"); if(tb) tb.onclick=function(){startLesson({t:"Tricky keys",kind:"tricky",k:tk.join(""),practice:true});};
   app.querySelectorAll(".area").forEach(function(b){b.onclick=function(){viewUnit=+b.dataset.u; renderMap();};});
@@ -950,6 +992,7 @@ function kbHtml(learned){
 }
 var SHORTF={lp:"left pinky",lr:"left ring",lm:"left middle",li:"left pointer",ri:"right pointer",rm:"right middle",rr:"right ring",rp:"right pinky",th:"thumb"};
 function tipFor(l){
+  if(l.kind==="message") return "Type "+esc(l.from.nick)+"'s message!";
   if(l.kind==="drill"){
     if(l.idx===0) return "Feel the bumps on <b>F</b> and <b>J</b>.";
     return "New: "+l.k.split("").map(function(c){return "<b>"+esc(keyLabel(c))+"</b> ("+SHORTF[FINGER[c]]+")";}).join(", ");
@@ -963,7 +1006,7 @@ function startLesson(l){
   var text=buildText(l);
   L={l:l,text:text,i:0,miss:{},firstMiss:{},started:false,active:0,last:0,done:false,ready:false,oops:false,
      fade: l.unit!==undefined ? (unitDone(l.unit)||l.unit>=4) : unitDone(3)};
-  var learned = l.kind==="custom" ? "abcdefghijklmnopqrstuvwxyz0123456789;',./-=⇧" : l.kind==="tricky" ? learnedNow() : l.learned;
+  var learned = l.kind==="custom" ? "abcdefghijklmnopqrstuvwxyz0123456789;',./-=⇧" : (l.kind==="tricky"||l.kind==="message") ? learnedNow() : l.learned;
   var html="", n=0;
   // keep each word and its trailing space together so lines never split a word
   var chunks=text.match(/[^ ]+ ?| /g)||[];
@@ -1055,7 +1098,7 @@ function finish(){
   function find(id){ if(!S.finds[id]){ S.finds[id]=Date.now(); newFinds.push(FINDS.filter(function(f){return f.id===id;})[0].t); } }
   if(stars>0){
     var beforeQuest=todayCount();
-    S.days[today()]=beforeQuest+1;
+    if(!l.mini) S.days[today()]=beforeQuest+1; else beforeQuest=-9; /* a pet's message is a bonus, not a quest lesson */
     gemsEarned=stars + (beforeQuest+1===S.goal?5:0);
     S.gems+=gemsEarned;
     if(l.id){ var b=S.best[l.id]; if(!b||stars>b.stars||(stars===b.stars&&sp>b.wpm)) S.best[l.id]={stars:Math.max(stars,b?b.stars:0),wpm:Math.max(sp,b?b.wpm:0),acc:Math.max(acc,b?b.acc:0)}; }
@@ -1094,6 +1137,7 @@ function finish(){
   else if(stars===1){ ci=Math.floor(Math.random()*CHEERS1.length); title=CHEERS1[ci]; clip="cheer1-"+ci; }
   else { title="Almost there!"; clip="cheer0"; }
   if(questDone) clip="quest"; else if(newFriend) clip="friend";
+  if(l.mini&&stars>0){ title="Message sent! 📨"; }
   var hasNext = l.id && l.idx<LESSONS.length-1;
   var pals=ownedPets(), pal=stars>0?(pals.length?petHtml(rnd(pals),"cheerpal"):"<span class=\"cheerpal\">"+COURSE[l.unit!==undefined?l.unit:0].animal+"</span>"):"";
   var bigStars="<span class=\"bigstars\" aria-label=\""+stars+" of 3 stars\">"; for(var si=0;si<3;si++) bigStars+= si<stars?"<span class=\"on\" style=\"animation-delay:"+(0.15+si*0.3)+"s\">★</span>":"<span class=\"off\">★</span>"; bigStars+="</span>";
@@ -1112,14 +1156,17 @@ function finish(){
   if(stars>0) h+=rewardHtml();
   h+="<div class=\"row\" style=\"justify-content:center\">";
   if(questDone&&digReady()) h+="<button class=\"btn primary big dig-btn\" id=\"digb\">⛏️ Bonus dig!</button>";
+  if(!l.mini&&stars>0&&msgReady()) h+="<button class=\"btn big\" id=\"msgb2\">📨 A message!</button>";
   if(stars>0&&hasNext) h+="<button class=\"btn "+(questDone&&digReady()?"":"primary ")+"big\" id=\"nextb\">Next stop</button><button class=\"btn big\" id=\"again\">Try again</button>";
+  else if(l.mini&&stars>0) h+="<button class=\"btn primary big\" id=\"nextb\">Next stop</button>";
   else h+="<button class=\"btn primary big\" id=\"again\">Try again</button>";
   h+="<button class=\"btn big\" id=\"mapb\">Map</button></div></div>";
   app.innerHTML=h;
-  document.getElementById("again").onclick=function(){startLesson(l);};
+  var ag=document.getElementById("again"); if(ag) ag.onclick=function(){startLesson(l);};
   document.getElementById("mapb").onclick=renderMap;
   var dgb=document.getElementById("digb"); if(dgb) dgb.onclick=renderDig;
-  var nb=document.getElementById("nextb"); if(nb){ nb.onclick=function(){startLesson(LESSONS[l.idx+1]);}; nb.focus(); }
+  var mb2=document.getElementById("msgb2"); if(mb2) mb2.onclick=startMessage;
+  var nb=document.getElementById("nextb"); if(nb){ nb.onclick=function(){startLesson(l.mini?LESSONS[nextIndex()]:LESSONS[l.idx+1]);}; nb.focus(); }
   bindReward(function(){ var f=document.getElementById("digb")||nb||document.getElementById("again"); if(f) f.focus(); });
   if(stars>0){ celebrate(stars,gemsEarned,newFriend||questDone); }
   setTimeout(function(){ play(clip); }, stars>0?450:0);
